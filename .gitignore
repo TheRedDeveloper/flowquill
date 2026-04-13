@@ -1,0 +1,13 @@
+node_modules/
+dist/
+out/
+.vscode-test/
+coverage/
+*.vsix
+*.log
+.DS_Store
+src/**/*.js
+src/**/*.js.map
+package.json
+*-lock.json
+*-lock.yaml
