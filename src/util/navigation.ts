@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { clampPositionToDocument } from "./editor";
 
 const WORD_CHAR = /\w/;
 
@@ -11,7 +10,7 @@ const isWordChar = (char: string, bigWord: boolean): boolean => {
 };
 
 export const offsetAt = (document: vscode.TextDocument, position: vscode.Position): number =>
-  document.offsetAt(clampPositionToDocument(document, position));
+  document.offsetAt(position);
 
 export const positionAt = (document: vscode.TextDocument, offset: number): vscode.Position => {
   const max = document.getText().length;

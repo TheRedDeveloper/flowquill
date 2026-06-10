@@ -40,7 +40,31 @@ const moveByOffset = (
   position: vscode.Position,
   delta: number,
 ): vscode.Position => {
-  const current = document.offsetAt(clampPositionToDocument(document, position));
+  if (delta === 1) {
+    if (position.character < document.lineAt(position.line).text.length) {
+      return new vscode.Position(position.line, position.character + 1);
+    }
+
+    if (position.line < document.lineCount - 1) {
+      return new vscode.Position(position.line + 1, 0);
+    }
+
+    return position;
+  }
+
+  if (delta === -1) {
+    if (position.character > 0) {
+      return new vscode.Position(position.line, position.character - 1);
+    }
+
+    if (position.line > 0) {
+      return new vscode.Position(position.line - 1, document.lineAt(position.line - 1).text.length);
+    }
+
+    return position;
+  }
+
+  const current = document.offsetAt(position);
   const max = document.getText().length;
   const target = Math.min(Math.max(current + delta, 0), max);
   return document.positionAt(target);
