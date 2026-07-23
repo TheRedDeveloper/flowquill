@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowquill Tutor</title>
+  <link rel="stylesheet" href="{{CSS_URI}}">
+</head>
+<body>
+  <div id="app">
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="top-row">
+        <div class="breadcrumb" id="breadcrumb">
+          <span class="chapter-name" id="chapterTitle">Chapter</span>
+          <span class="separator">›</span>
+          <span class="step-name" id="stepTitle">Step</span>
+        </div>
+        <div class="step-counter" id="stepCounter">Step 1 / 1</div>
+      </div>
+      
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div class="nav-controls">
+        <button id="btnPrev" class="nav-btn" title="Previous Step">‹</button>
+        <select id="stepDropdown" class="step-dropdown"></select>
+        <button id="btnNext" class="nav-btn" title="Next Step">›</button>
+        <button id="btnClose" class="nav-btn close-btn" title="Close Tutor">✕</button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      <section class="instructions-section" id="instructions">
+        <!-- Rendered instruction prose with <kbd> key chips -->
+      </section>
+
+      <section class="tasks-section" id="tasksContainer">
+        <h3 class="tasks-header">Tasks</h3>
+        <ul class="task-list" id="taskList">
+          <!-- Rendered task checklist -->
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{JS_URI}}"></script>
+</body>
+</html>

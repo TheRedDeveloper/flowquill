@@ -14,6 +14,7 @@ import { ModeManager } from "./modes";
 import { RegisterStore } from "./registerStore";
 import { ScriptSession } from "./session";
 import { guideForZenViewSetup, makeNormal } from "./layout";
+import { TutorController } from "./tutor/tutor";
 
 let modeManagerRef: ModeManager | undefined;
 
@@ -46,6 +47,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const dispatcher = new CommandDispatcher(modeManager, macroRecorder, inputController);
   const cursorController = new FakeBlockCursorController(modeManager);
+  const tutorController = new TutorController(context, modeManager, macroRecorder);
 
   registerCoreCommands(dispatcher, modeManager);
   registerMoveCommands(dispatcher, inputController, registers);
@@ -55,6 +57,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerInspectCommands(dispatcher, modeManager);
   registerMacroCommands(dispatcher, macroRecorder);
   dispatcher.register("flowquill.makeNormal", makeNormal);
+  dispatcher.register("flowquill.startTutor", async () => {
+    await tutorController.start();
+  });
 
   cursorController.initialize();
 
@@ -66,6 +71,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     scriptSession,
     dispatcher,
     cursorController,
+    tutorController,
     modeManager.onDidChangeMode(() => {
       cursorController.render(vscode.window.activeTextEditor);
     }),

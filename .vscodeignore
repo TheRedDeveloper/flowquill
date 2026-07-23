@@ -4,3 +4,5 @@
 !readme.md
 !LICENSE
 !dist/extension.js
+!src/tutor/tutor.md
+!src/tutor/webview

@@ -60,6 +60,11 @@ const BASE_PACKAGE_JSON: PackageJson = {
         title: "Disable Zen UI Layout",
         category: "Flowquill",
       },
+      {
+        command: "flowquill.startTutor",
+        title: "Start Interactive Tutor",
+        category: "Flowquill",
+      },
     ],
     configuration: {
       title: "Flowquill",
@@ -78,7 +83,7 @@ const BASE_PACKAGE_JSON: PackageJson = {
     "build:code": "pnpm run build:code:bundle && pnpm run build:code:optimize",
     "build:code:bundle": "tsup",
     "build:code:optimize": "node optimize.mjs",
-    "build:german": "pnpm run build:keybindings:german && pnpm run build:code",
+    "build:german": "pnpm run build:keybindings:german && FLOWQUILL_LAYOUT=german pnpm run build:code",
     "build:keybindings": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON package.build.ts",
     "build:keybindings:german": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON package.build.ts --layout=german",
     clean: "rimraf dist out .vscode-test",
@@ -89,6 +94,8 @@ const BASE_PACKAGE_JSON: PackageJson = {
     "test:unit": "vitest run",
     typecheck: "tsc --noEmit",
     watch: "tsup --watch",
+    "package": "pnpm build && vsce package --no-dependencies",
+    "package:german": "pnpm build:german && vsce package --no-dependencies",
   },
   dependencies: {
     "vscode-languageclient": "^9.0.1",

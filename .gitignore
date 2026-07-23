@@ -11,3 +11,4 @@ src/**/*.js.map
 package.json
 *-lock.json
 *-lock.yaml
+!src/tutor/webview/panel.js
