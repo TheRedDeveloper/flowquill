@@ -33,6 +33,7 @@ const config: KeybindingConfig = {
   },
   groups: {
     global: [
+      { key: "ctrl+shift+t", command: "flowquill.startTutor" },
       { key: "escape", command: "flowquill.enterMoveMode" },
       { key: "alt+escape", command: "flowquill.enterMoveModeKeepSelection" },
       { key: "ctrl+space", command: "editor.action.triggerSuggest" },

@@ -39,10 +39,10 @@ const BASE_PACKAGE_JSON: PackageJson = {
   name: "flowquill",
   displayName: "Flowquill",
   description: "Better modal editing",
-  version: "0.1.0",
+  version: "1.0.0",
   publisher: "reddev",
   license: "0BSD",
-  private: true,
+  icon: "icon.png",
   engines: {
     vscode: "^1.115.0",
   },
@@ -186,6 +186,12 @@ const build = async (): Promise<void> => {
     ...packageJson.contributes,
     keybindings,
   };
+
+  if (layout === "german") {
+    packageJson.name = "flowquill-german";
+    packageJson.displayName = "Flowquill (German Layout)";
+    packageJson.icon = "icon-german.png";
+  }
 
   await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
 };

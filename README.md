@@ -1,14 +1,17 @@
-# Flowquill
+<p align="center">
+  <img src="https://raw.githubusercontent.com/TheRedDeveloper/flowquill/main/icon-big.png" alt="Flowquill" width="200">
+</p>
 
-The ultimate [Neovim](https://github.com/neovim/neovim) alternative for VSCode. Custom modes, key bindings, and a clean
-interface inspired by [Helix](https://github.com/helix-editor/helix).
+Flowquill is basically a coding interface for VSCode, inspired by [Helix](https://github.com/helix-editor/helix).
+
+Get started by installing the extension and opening the built-in tutor with `⎈⇧t` (Ctrl+Shift+T).
 
 ## Features
 - Pure keyboard efficiency
 - Beautiful Zen interface
 - Quick Scripting and Macros
 - Lightning-fast navigation
-- Easy to learn
+- Easy to learn through interactive tutor
 - Modal editing
 - Multi-cursor magic at your fingertips
 
@@ -19,6 +22,8 @@ interface inspired by [Helix](https://github.com/helix-editor/helix).
 - **Inspect mode**: Explore code details with definitions, references, and more.
 
 ## Key Bindings
+
+`⎈⇧t` Open the interactive tutor
 
 ### Editor
 
