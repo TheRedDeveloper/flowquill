@@ -39,7 +39,7 @@ const BASE_PACKAGE_JSON: PackageJson = {
   name: "flowquill",
   displayName: "Flowquill",
   description: "Better modal editing",
-  version: "1.0.0",
+  version: "1.0.1",
   publisher: "reddev",
   license: "0BSD",
   icon: "icon.png",

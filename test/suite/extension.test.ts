@@ -299,6 +299,21 @@ suite("Flowquill extension", () => {
     assert.strictEqual(editor.document.getText(), " def");
   });
 
+  test("cutWithoutCopy removes selection without overwriting register", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      content: "abc def",
+      language: "plaintext",
+    });
+
+    const editor = await vscode.window.showTextDocument(document);
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 3))];
+
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+    await vscode.commands.executeCommand("flowquill.modify.cutWithoutCopy");
+
+    assert.strictEqual(editor.document.getText(), "def");
+  });
+
   test("removeEmptyLines does not delete non-empty lines when only EOL is selected", async () => {
     const document = await vscode.workspace.openTextDocument({
       content: "abc\n",

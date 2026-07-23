@@ -55,7 +55,7 @@ bla[3]
 ### Delete
 `d` cuts the selection (copies + removes).
 `⌦`/`⌫` deletes without copying.
-- [ ] Delete the duplicate lines
+- [ ] Delete the lines saying "Delete this line."
 ```md
 Keep this line.
 Delete this line.
@@ -140,7 +140,7 @@ Bla bla bla.
 `⇧r` replaces with clipboard, copying the old content.
 `⎈r` and `⎈⎇c` to not copy.
 - [ ] Change "OLD" to "NEW"
-- [ ] Replace "TARGET" with what you just copied
+- [ ] Replace "TARGET" with the "OLD" you just copied
 ```md
 Replace OLD with something.
 Replace TARGET with clipboard content.
@@ -184,6 +184,7 @@ Delete this line, then undo it.
 ### File Search
 `⎈f` opens search.
 `n` jumps to the next match, `⇧n` to the previous.
+This can also be used without a search to find occurrences of the current selection.
 Hold `⎇` to add a selection.
 - [ ] Find the first "FIND_ME"
 - [ ] Select the second occurrence

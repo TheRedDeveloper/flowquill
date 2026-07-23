@@ -718,7 +718,6 @@ export const registerModifyCommands = (
     }
 
     await runMutation(async () => {
-      editor.selections = editor.selections.map((selection) => faceSelectionBackward(editor.document, selection));
       collapseSelectionsForInsert(editor, false);
     }, true);
     await modeManager.setMode("modify");
@@ -743,7 +742,6 @@ export const registerModifyCommands = (
     }
 
     await runMutation(async () => {
-      editor.selections = editor.selections.map((selection) => faceSelectionForward(editor.document, selection));
       collapseSelectionsForInsert(editor, true);
     }, true);
     await modeManager.setMode("modify");
@@ -876,6 +874,17 @@ export const registerModifyCommands = (
 
     await runMutation(async () => {
       await registers.copyFromSelections(editor);
+      await deleteCompleteSelections(editor);
+    });
+  });
+
+  dispatcher.register("flowquill.modify.cutWithoutCopy", async () => {
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+
+    await runMutation(async () => {
       await deleteCompleteSelections(editor);
     });
   });
