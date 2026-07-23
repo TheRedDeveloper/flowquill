@@ -243,14 +243,23 @@ export const getWordBackwardTokenTarget = (
     return { anchorOffset: 0, targetOffset: 0 };
   }
 
-  const anchorOffset = Math.min(Math.max(fromOffset, 0), length);
-  let index = Math.max(0, anchorOffset - 1);
+  let start = Math.min(Math.max(fromOffset, 0), length - 1);
+  const wasAtStart = isFirstCharOfToken(text, start, bigWord);
 
-  while (index > 0 && getCharType(text[index] ?? "", bigWord) === "space") {
-    index -= 1;
+  if (wasAtStart && start > 0) {
+    start = start - 1;
   }
 
-  const tokenType = getCharType(text[index] ?? "", bigWord);
+  const anchorOffset = wasAtStart ? start + 1 : Math.min(length, fromOffset + 1);
+
+  if (getCharType(text[start] ?? "", bigWord) === "space") {
+    while (start > 0 && getCharType(text[start] ?? "", bigWord) === "space") {
+      start -= 1;
+    }
+  }
+
+  const tokenType = getCharType(text[start] ?? "", bigWord);
+  let index = start;
 
   while (index >= 0 && getCharType(text[index] ?? "", bigWord) === tokenType) {
     index -= 1;

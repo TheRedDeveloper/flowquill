@@ -1089,7 +1089,7 @@ suite("Flowquill extension", () => {
     await vscode.commands.executeCommand("flowquill.select.wordBackward");
 
     assert.strictEqual(editor.selection.start.character, 0);
-    assert.strictEqual(editor.selection.end.character, 2);
+    assert.strictEqual(editor.selection.end.character, 3);
   });
 
   test("consecutive w keypresses select word by word without skipping words", async () => {
@@ -1180,9 +1180,9 @@ suite("Flowquill extension", () => {
     editor.selections = [new vscode.Selection(new vscode.Position(0, 60), new vscode.Position(0, 61))];
     await vscode.commands.executeCommand("flowquill.enterMoveMode");
 
-    // 1st b: select ');' (61..60)
+    // 1st b: select ');' (62..60)
     await vscode.commands.executeCommand("flowquill.move.wordBackward");
-    assert.strictEqual(editor.selection.anchor.character, 61);
+    assert.strictEqual(editor.selection.anchor.character, 62);
     assert.strictEqual(editor.selection.active.character, 60);
 
     // 2nd b: select 'bigWord' (60..53)
@@ -1309,6 +1309,40 @@ suite("Flowquill extension", () => {
     await vscode.commands.executeCommand("flowquill.move.wordEnd");
     assert.strictEqual(editor.selection.start.character, 4);
     assert.strictEqual(editor.selection.active.character, 11);
+  });
+
+  test("b on forward selection includes block cursor character (bigWord)", async () => {
+    const content = "const target =   previousWordStart(document, active, bigWord);";
+    const document = await vscode.workspace.openTextDocument({ content, language: "plaintext" });
+    const editor = await vscode.window.showTextDocument(document);
+
+    // Initial state: forward selection on 'bigWord' (indices 53..59)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 53), new vscode.Position(0, 59))];
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+
+    // Press b: converts to backward selection covering 'bigWord' (60..53)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 60);
+    assert.strictEqual(editor.selection.active.character, 53);
+  });
+
+  test("b on exampl|e> and exampl<e| selects full word <example|", async () => {
+    const content = "example";
+    const document = await vscode.workspace.openTextDocument({ content, language: "plaintext" });
+    const editor = await vscode.window.showTextDocument(document);
+
+    // Case 1: exampl|e> (anchor=0, active=6)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 6))];
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 7);
+    assert.strictEqual(editor.selection.active.character, 0);
+
+    // Case 2: exampl<e| (anchor=6, active=6)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 6), new vscode.Position(0, 6))];
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 7);
+    assert.strictEqual(editor.selection.active.character, 0);
   });
 
   test("w on whitespace before a word selects whitespace run when starting new selection", async () => {

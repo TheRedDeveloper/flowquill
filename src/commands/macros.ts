@@ -47,18 +47,7 @@ export const registerMacroCommands = (
   dispatcher.register(
     "flowquill.macro.load",
     async (args) => {
-      let name = typeof args === "string" && args.length > 0 ? args : undefined;
-      if (!name) {
-        name = await vscode.window.showInputBox({
-          prompt: "Macro name to load",
-          ignoreFocusOut: true,
-        });
-      }
-
-      if (!name) {
-        return;
-      }
-
+      const name = typeof args === "string" && args.length > 0 ? args : undefined;
       await macroRecorder.load(name);
     },
     { recordable: false },

@@ -22,7 +22,7 @@ interface inspired by [Helix](https://github.com/helix-editor/helix).
 
 ### Editor
 
-`esc` Return to move mode
+`esc` Return to move mode, `⎇esc` keep selection
 
 ### Smart Coding
 
@@ -34,21 +34,21 @@ interface inspired by [Helix](https://github.com/helix-editor/helix).
 
 #### Tool Panels
 
-`⎈1`/`⎈⇧g` Toggle git
+`⎈1` Toggle git
 
-`⎈2`/`⎈⇧e` Toggle explorer
+`⎈2` Toggle explorer
 
 `⎈3` Toggle copilot chat
 
-`⎈4`/`⎈⇧s` Toggle search
+`⎈4` Toggle search
 
-`⎈5`/`⎈⇧t` Toggle timeline
+`⎈5` Toggle timeline
 
-`⎈6`/`⎈⇧l` Toggle outline
+`⎈6` Toggle outline
 
-`⎈7`/`⎈⇧b` Toggle debug
+`⎈7` Toggle debug
 
-`⎈8`/`⎈⇧x` Toggle extensions
+`⎈8` Toggle extensions
 
 `⎈b` Toggle sidebar
 

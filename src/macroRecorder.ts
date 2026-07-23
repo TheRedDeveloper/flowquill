@@ -90,7 +90,12 @@ export class MacroRecorder {
   }
 
   public async load(nameArg?: string): Promise<void> {
-    const provided = nameArg ?? (await vscode.window.showQuickPick(Array.from(this.named.keys())));
+    const provided =
+      nameArg ??
+      (await vscode.window.showQuickPick(Array.from(this.named.keys()), {
+        placeHolder: "Select a macro to load",
+        ignoreFocusOut: true,
+      }));
     if (!provided) {
       return;
     }
