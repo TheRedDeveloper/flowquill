@@ -34,6 +34,7 @@ const config: KeybindingConfig = {
   groups: {
     global: [
       { key: "escape", command: "flowquill.enterMoveMode" },
+      { key: "alt+escape", command: "flowquill.enterMoveModeKeepSelection" },
       { key: "ctrl+space", command: "editor.action.triggerSuggest" },
       { key: "shift+space", command: "editor.action.inlineSuggest.commit" },
       { key: "ctrl+shift+space", command: "inlineChat.start" },
@@ -268,9 +269,13 @@ const config: KeybindingConfig = {
     ],
     selectedMove: [
       { key: "h", command: "flowquill.select.left" },
+      { key: "left", command: "flowquill.select.left" },
       { key: "j", command: "flowquill.select.down" },
+      { key: "down", command: "flowquill.select.down" },
       { key: "k", command: "flowquill.select.up" },
+      { key: "up", command: "flowquill.select.up" },
       { key: "l", command: "flowquill.select.right" },
+      { key: "right", command: "flowquill.select.right" },
       { key: "w", command: "flowquill.select.wordForward" },
       { key: "e", command: "flowquill.select.wordEnd" },
       { key: "b", command: "flowquill.select.wordBackward" },
@@ -365,13 +370,13 @@ const config: KeybindingConfig = {
       command: "flowquill.ignore",
     })),
     menu: [
-      { key: "h", command: "list.collapse", when: "listFocus" },
-      { key: "j", command: "list.focusDown", when: "listFocus" },
-      { key: "k", command: "list.focusUp", when: "listFocus" },
-      { key: "l", command: "list.expand", when: "listFocus" },
-      { key: "a", command: "explorer.newFile", when: "filesExplorerFocus && listFocus" },
-      { key: "shift+a", command: "explorer.newFolder", when: "filesExplorerFocus && listFocus" },
-      { key: "r", command: "renameFile", when: "filesExplorerFocus && listFocus" },
+      { key: "h", command: "list.collapse", when: "listFocus && !inputFocus" },
+      { key: "j", command: "list.focusDown", when: "listFocus && !inputFocus" },
+      { key: "k", command: "list.focusUp", when: "listFocus && !inputFocus" },
+      { key: "l", command: "list.expand", when: "listFocus && !inputFocus" },
+      { key: "a", command: "explorer.newFile", when: "filesExplorerFocus && listFocus && !inputFocus" },
+      { key: "shift+a", command: "explorer.newFolder", when: "filesExplorerFocus && listFocus && !inputFocus" },
+      { key: "r", command: "renameFile", when: "filesExplorerFocus && listFocus && !inputFocus" },
     ],
   },
 };

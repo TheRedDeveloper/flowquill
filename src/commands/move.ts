@@ -12,6 +12,9 @@ import {
   moveVerticalWithPreferredColumn,
   nextWordEnd,
   nextWordStart,
+  performWordBackwardSelection,
+  performWordEndSelection,
+  performWordForwardSelection,
   previousWordStart,
   seekFromSelection,
   selectionWithoutCursorCharacter,
@@ -231,27 +234,63 @@ export const registerMoveCommands = (
   });
 
   dispatcher.register("flowquill.move.wordForward", (args) => {
-    selectWith((editor, selection) => wordForwardTarget(editor.document, selection.active, false), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordForwardSelection(editor.document, selection, false, parseCount(args), false));
   });
 
   dispatcher.register("flowquill.move.wordEnd", (args) => {
-    selectWith((editor, selection) => nextWordEnd(editor.document, selection.active, false), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordEndSelection(editor.document, selection, false, parseCount(args), false));
   });
 
   dispatcher.register("flowquill.move.wordBackward", (args) => {
-    selectWith((editor, selection) => previousWordStart(editor.document, selection.active, false), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordBackwardSelection(editor.document, selection, false, parseCount(args), false));
   });
 
   dispatcher.register("flowquill.move.wordForwardBig", (args) => {
-    selectWith((editor, selection) => wordForwardTarget(editor.document, selection.active, true), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordForwardSelection(editor.document, selection, true, parseCount(args), false));
   });
 
   dispatcher.register("flowquill.move.wordEndBig", (args) => {
-    selectWith((editor, selection) => nextWordEnd(editor.document, selection.active, true), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordEndSelection(editor.document, selection, true, parseCount(args), false));
   });
 
   dispatcher.register("flowquill.move.wordBackwardBig", (args) => {
-    selectWith((editor, selection) => previousWordStart(editor.document, selection.active, true), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordBackwardSelection(editor.document, selection, true, parseCount(args), false));
   });
 
   dispatcher.register("flowquill.move.lineDown", (args) => {

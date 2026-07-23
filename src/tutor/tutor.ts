@@ -56,6 +56,9 @@ export class TutorController implements vscode.Disposable {
     );
 
     const initialStep = this.steps[this.currentStepIndex];
+    if (!initialStep) {
+      return;
+    }
 
     this.practiceDocument = await vscode.workspace.openTextDocument({
       content: initialStep.practiceContent,
@@ -122,6 +125,7 @@ export class TutorController implements vscode.Disposable {
     await this.modeManager.setMode("move");
 
     const step = this.steps[stepIndex];
+    if (!step) return;
 
     // Reset task done states when entering step
     step.tasks.forEach((t) => (t.done = false));
@@ -248,7 +252,8 @@ export class TutorController implements vscode.Disposable {
     step.tasks.forEach((task, idx) => {
       if (task.done) return;
 
-      const isPrerequisiteMet = idx === 0 || step.tasks[idx - 1].done;
+      const prevTask = step.tasks[idx - 1];
+      const isPrerequisiteMet = idx === 0 || (prevTask !== undefined && prevTask.done);
       if (!isPrerequisiteMet) return;
 
       const verifier = stepVerifiers?.[task.index];
@@ -299,11 +304,15 @@ export class TutorController implements vscode.Disposable {
 
           if (step && taskIdx >= 0 && taskIdx < step.tasks.length && isPrerequisiteMet) {
             const task = step.tasks[taskIdx];
+            if (!task) return;
             task.done = !task.done;
 
             if (!task.done) {
               for (let i = taskIdx + 1; i < step.tasks.length; i++) {
-                step.tasks[i].done = false;
+                const targetTask = step.tasks[i];
+                if (targetTask) {
+                  targetTask.done = false;
+                }
               }
             }
 

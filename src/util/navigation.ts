@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { selectionWithCursorCharacter } from "./editor";
 
 const WORD_CHAR = /\w/;
 
@@ -7,6 +8,22 @@ const isWordChar = (char: string, bigWord: boolean): boolean => {
     return /\S/.test(char);
   }
   return WORD_CHAR.test(char);
+};
+
+export const isStartOfWord = (
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  bigWord: boolean,
+): boolean => {
+  const text = document.getText();
+  const offset = offsetAt(document, position);
+  if (offset <= 0 || offset >= text.length) {
+    return false;
+  }
+
+  const curr = text[offset] ?? "";
+  const prev = text[offset - 1] ?? "";
+  return isWordChar(curr, bigWord) && !isWordChar(prev, bigWord);
 };
 
 export const offsetAt = (document: vscode.TextDocument, position: vscode.Position): number =>
@@ -47,10 +64,12 @@ export const lineEnd = (document: vscode.TextDocument, position: vscode.Position
 
 const nextWordStartOffset = (text: string, fromOffset: number, bigWord: boolean): number => {
   const length = text.length;
-  let index = Math.min(Math.max(fromOffset + 1, 0), length);
+  let index = Math.min(Math.max(fromOffset, 0), length);
 
-  while (index < length && isWordChar(text[index] ?? "", bigWord)) {
-    index += 1;
+  if (index < length && isWordChar(text[index] ?? "", bigWord)) {
+    while (index < length && isWordChar(text[index] ?? "", bigWord)) {
+      index += 1;
+    }
   }
 
   while (index < length && !isWordChar(text[index] ?? "", bigWord)) {
@@ -199,6 +218,217 @@ export const findChar = (
   }
 
   return positionAt(document, targetOffset);
+};
+
+export const wordForwardTarget = (
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  bigWord: boolean,
+): vscode.Position => {
+  const next = nextWordStart(document, position, bigWord);
+  if (next.isAfter(position)) {
+    return moveHorizontal(document, next, -1);
+  }
+
+  return next;
+};
+
+export const getWordBackwardTokenTarget = (
+  text: string,
+  fromOffset: number,
+  bigWord: boolean,
+): { anchorOffset: number; targetOffset: number } => {
+  const length = text.length;
+  if (length === 0) {
+    return { anchorOffset: 0, targetOffset: 0 };
+  }
+
+  const anchorOffset = Math.min(Math.max(fromOffset, 0), length);
+  let index = Math.max(0, anchorOffset - 1);
+
+  while (index > 0 && getCharType(text[index] ?? "", bigWord) === "space") {
+    index -= 1;
+  }
+
+  const tokenType = getCharType(text[index] ?? "", bigWord);
+
+  while (index >= 0 && getCharType(text[index] ?? "", bigWord) === tokenType) {
+    index -= 1;
+  }
+
+  const targetOffset = Math.max(0, index + 1);
+  return { anchorOffset, targetOffset };
+};
+
+export const getWordEndTokenTarget = (
+  text: string,
+  fromOffset: number,
+  bigWord: boolean,
+): { anchorOffset: number; targetOffset: number } => {
+  const length = text.length;
+  if (length === 0) {
+    return { anchorOffset: 0, targetOffset: 0 };
+  }
+
+  let start = Math.min(Math.max(fromOffset, 0), length - 1);
+
+  if (isLastCharOfToken(text, start, bigWord) && start + 1 < length) {
+    start = start + 1;
+  }
+
+  const anchorOffset = start;
+  let index = start;
+
+  while (index < length && getCharType(text[index] ?? "", bigWord) === "space") {
+    index += 1;
+  }
+
+  const tokenType = getCharType(text[index] ?? "", bigWord);
+
+  while (index < length && getCharType(text[index] ?? "", bigWord) === tokenType) {
+    index += 1;
+  }
+
+  const targetOffset = Math.max(start, index - 1);
+  return { anchorOffset, targetOffset };
+};
+
+export const performWordBackwardSelection = (
+  document: vscode.TextDocument,
+  selection: vscode.Selection,
+  bigWord: boolean,
+  count: number,
+  extending: boolean,
+): vscode.Selection => {
+  let currentSelection = selection;
+  for (let i = 0; i < count; i++) {
+    const active = currentSelection.active;
+    const text = document.getText();
+    const fromOffset = document.offsetAt(active);
+
+    const { anchorOffset, targetOffset } = getWordBackwardTokenTarget(text, fromOffset, bigWord);
+
+    const anchorPos = extending ? currentSelection.anchor : document.positionAt(anchorOffset);
+    const targetPos = document.positionAt(targetOffset);
+
+    currentSelection = new vscode.Selection(anchorPos, targetPos);
+  }
+
+  return currentSelection;
+};
+
+export const performWordEndSelection = (
+  document: vscode.TextDocument,
+  selection: vscode.Selection,
+  bigWord: boolean,
+  count: number,
+  extending: boolean,
+): vscode.Selection => {
+  let currentSelection = selection;
+  for (let i = 0; i < count; i++) {
+    const active = currentSelection.active;
+    const text = document.getText();
+    const fromOffset = document.offsetAt(active);
+
+    const { anchorOffset, targetOffset } = getWordEndTokenTarget(text, fromOffset, bigWord);
+
+    const anchorPos = extending ? currentSelection.anchor : document.positionAt(anchorOffset);
+    const targetPos = document.positionAt(targetOffset);
+
+    currentSelection = new vscode.Selection(anchorPos, targetPos);
+  }
+
+  return currentSelection;
+};
+
+type CharType = "word" | "punct" | "space";
+
+const getCharType = (char: string, bigWord: boolean): CharType => {
+  if (/\s/.test(char)) {
+    return "space";
+  }
+  if (isWordChar(char, bigWord)) {
+    return "word";
+  }
+  return "punct";
+};
+
+const isLastCharOfToken = (text: string, offset: number, bigWord: boolean): boolean => {
+  const length = text.length;
+  if (offset < 0 || offset >= length - 1) {
+    return true;
+  }
+  return getCharType(text[offset] ?? "", bigWord) !== getCharType(text[offset + 1] ?? "", bigWord);
+};
+
+const isFirstCharOfToken = (text: string, offset: number, bigWord: boolean): boolean => {
+  if (offset <= 0) {
+    return true;
+  }
+  return getCharType(text[offset] ?? "", bigWord) !== getCharType(text[offset - 1] ?? "", bigWord);
+};
+
+export const getWordForwardTokenTarget = (
+  text: string,
+  fromOffset: number,
+  bigWord: boolean,
+): { startOffset: number; targetOffset: number } => {
+  const length = text.length;
+  if (length === 0) {
+    return { startOffset: 0, targetOffset: 0 };
+  }
+
+  let start = Math.min(Math.max(fromOffset, 0), length - 1);
+
+  if (isLastCharOfToken(text, start, bigWord) && start + 1 < length) {
+    start = start + 1;
+  }
+
+  const tokenType = getCharType(text[start] ?? "", bigWord);
+  let index = start;
+
+  if (tokenType === "space") {
+    while (index < length && getCharType(text[index] ?? "", bigWord) === "space") {
+      index += 1;
+    }
+    const targetOffset = Math.max(start, index - 1);
+    return { startOffset: start, targetOffset };
+  }
+
+  while (index < length && getCharType(text[index] ?? "", bigWord) === tokenType) {
+    index += 1;
+  }
+
+  while (index < length && getCharType(text[index] ?? "", bigWord) === "space") {
+    index += 1;
+  }
+
+  const targetOffset = Math.max(start, index - 1);
+  return { startOffset: start, targetOffset };
+};
+
+export const performWordForwardSelection = (
+  document: vscode.TextDocument,
+  selection: vscode.Selection,
+  bigWord: boolean,
+  count: number,
+  extending: boolean,
+): vscode.Selection => {
+  let currentSelection = selection;
+  for (let i = 0; i < count; i++) {
+    const active = currentSelection.active;
+    const text = document.getText();
+    const fromOffset = document.offsetAt(active);
+
+    const { startOffset, targetOffset } = getWordForwardTokenTarget(text, fromOffset, bigWord);
+
+    const startPos = extending ? currentSelection.anchor : document.positionAt(startOffset);
+    const targetPos = document.positionAt(targetOffset);
+
+    currentSelection = new vscode.Selection(startPos, targetPos);
+  }
+
+  return currentSelection;
 };
 
 export const halfPageMove = (

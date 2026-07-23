@@ -53,16 +53,47 @@ export const registerCoreCommands = (
   dispatcher.register(
     "flowquill.enterMoveMode",
     async () => {
-      if (modeManager.isMode("modify")) {
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        if (modeManager.isMode("modify")) {
           editor.selections = editor.selections.map((selection) => {
+            if (selection.isReversed) {
+              return new vscode.Selection(selection.active, selection.active);
+            }
+
             const line = selection.active.line;
             const character = Math.max(selection.active.character - 1, 0);
             const next = new vscode.Position(line, character);
             return new vscode.Selection(next, next);
           });
+        } else if (modeManager.isMode("select")) {
+          editor.selections = editor.selections.map(
+            (selection) => new vscode.Selection(selection.active, selection.active),
+          );
         }
+      }
+
+      await modeManager.setMode("move");
+    },
+    { recordable: false, exitInspectToMove: false },
+  );
+
+  dispatcher.register(
+    "flowquill.enterMoveModeKeepSelection",
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor && modeManager.isMode("modify")) {
+        editor.selections = editor.selections.map((selection) => {
+          if (selection.isEmpty) {
+            return selection;
+          }
+
+          if (!selection.isReversed) {
+            return selectionWithoutCursorCharacter(editor.document, selection);
+          }
+
+          return selection;
+        });
       }
 
       await modeManager.setMode("move");

@@ -215,24 +215,16 @@ const faceSelectionBackward = (
   document: vscode.TextDocument,
   selection: vscode.Selection,
 ): vscode.Selection => {
-  if (selection.isEmpty) {
-    return selection;
-  }
-
   const complete = selectionWithCursorCharacter(document, selection);
-  return selectionWithoutCursorCharacter(document, new vscode.Selection(complete.end, complete.start));
+  return new vscode.Selection(complete.end, complete.start);
 };
 
 const faceSelectionForward = (
   document: vscode.TextDocument,
   selection: vscode.Selection,
 ): vscode.Selection => {
-  if (selection.isEmpty) {
-    return selection;
-  }
-
   const complete = selectionWithCursorCharacter(document, selection);
-  return selectionWithoutCursorCharacter(document, new vscode.Selection(complete.start, complete.end));
+  return new vscode.Selection(complete.start, complete.end);
 };
 
 const preserveSelectionsForInsertBefore = (
@@ -247,14 +239,7 @@ const preserveSelectionsForAppendAfter = (
   editor: vscode.TextEditor,
 ): void => {
   editor.selections = editor.selections.map((selection) => {
-    if (selection.isEmpty) {
-      const target = positionAfterCursor(editor.document, selection.active);
-      return new vscode.Selection(target, target);
-    }
-
-    const forward = faceSelectionForward(editor.document, selection);
-    const movedActive = positionAfterCursor(editor.document, forward.active);
-    return new vscode.Selection(forward.anchor, movedActive);
+    return faceSelectionForward(editor.document, selection);
   });
 };
 
@@ -1097,6 +1082,7 @@ export const registerModifyCommands = (
     if (lastMutationRequiresTyping) {
       const inserted = input.getLastCommittedModifyText();
       if (inserted.length > 0) {
+        input.appendModifySessionText(inserted);
         await editor.edit((editBuilder) => {
           for (const selection of editor.selections) {
             editBuilder.insert(selection.active, inserted);

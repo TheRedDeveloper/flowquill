@@ -45,7 +45,9 @@ export class ModalInputController implements vscode.Disposable {
       }),
       this.modeManager.onDidChangeMode(async (mode) => {
         if (this.previousMode === "modify" && mode !== "modify") {
-          this.lastCommittedModifyText = this.modifySessionText;
+          if (this.modifySessionText.length > 0) {
+            this.lastCommittedModifyText = this.modifySessionText;
+          }
         }
 
         if (mode === "modify") {
@@ -63,6 +65,10 @@ export class ModalInputController implements vscode.Disposable {
 
   public getLastCommittedModifyText(): string {
     return this.lastCommittedModifyText;
+  }
+
+  public appendModifySessionText(text: string): void {
+    this.modifySessionText += text;
   }
 
   public async requestChars(label: string, length: number, handler: InputHandler): Promise<void> {

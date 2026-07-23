@@ -68,6 +68,9 @@ export function parseTutorMarkdown(markdown: string): TutorStep[] {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    if (line === undefined) {
+      continue;
+    }
 
     // Check for code block backticks
     if (line.startsWith("```")) {
@@ -115,7 +118,7 @@ export function parseTutorMarkdown(markdown: string): TutorStep[] {
 
     // Check for task item
     const taskMatch = line.match(/^-\s*\[\s*\]\s*(.*)$/);
-    if (taskMatch) {
+    if (taskMatch && taskMatch[1] !== undefined) {
       tasks.push({
         index: tasks.length,
         label: taskMatch[1].trim(),

@@ -5,6 +5,7 @@ const qwertyToQwertz: Record<string, string> = {
   "]": "[BracketRight]",
   ";": "[Semicolon]",
   "'": "[Quote]",
+  quote: "[Quote]",
   "\\": "[Backslash]",
   "-": "[Minus]",
   "=": "[Equal]",
@@ -117,7 +118,7 @@ export const toGermanLayoutBindings = (
       binding.command === "flowquill.select.enclose" && binding.key === "quote";
     let transformed = binding.key;
     transformed = isEncloseQuoteBinding
-      ? "[Backslash]"
+      ? "[Quote]"
       : transformKeySequence(binding.key, qwertyToQwertz);
     const alternatives = createAlternativeBindings([transformed]);
 

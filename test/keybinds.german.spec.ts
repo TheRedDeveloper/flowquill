@@ -32,15 +32,15 @@ describe("german keybinding transform", () => {
     assert.ok(trimKeys.has("alt+minus") || trimKeys.has("alt+oem_4"));
   });
 
-  it("maps surround/enclose to German backslash key variants", () => {
+  it("maps surround/enclose to German quote key variants", () => {
     const encloseKeys = keysForCommand("flowquill.select.enclose");
-    assert.ok(encloseKeys.has("[Backslash]") || encloseKeys.has("oem_2"));
+    assert.ok(encloseKeys.has("[Quote]") || encloseKeys.has("oem_7"));
   });
 
-  it("does not map ignore onto the enclose backslash key", () => {
+  it("does not map ignore onto the enclose quote key", () => {
     const ignoreKeys = keysForCommand("flowquill.ignore");
-    assert.strictEqual(ignoreKeys.has("[Backslash]"), false);
-    assert.strictEqual(ignoreKeys.has("oem_2"), false);
+    assert.strictEqual(ignoreKeys.has("[Quote]"), false);
+    assert.strictEqual(ignoreKeys.has("oem_7"), false);
   });
 
   it("maps format-selection to equal key variations", () => {

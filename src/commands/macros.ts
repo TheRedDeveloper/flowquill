@@ -1,3 +1,4 @@
+import * as vscode from "vscode";
 import { CommandDispatcher } from "./dispatcher";
 import type { MacroRecorder } from "../macroRecorder";
 import { parseCount } from "../util";
@@ -26,10 +27,19 @@ export const registerMacroCommands = (
   dispatcher.register(
     "flowquill.macro.save",
     async (args) => {
-      if (typeof args !== "string") {
-        throw new TypeError("Macro name must be a string");
+      let name = typeof args === "string" && args.length > 0 ? args : undefined;
+      if (!name) {
+        name = await vscode.window.showInputBox({
+          prompt: "Macro name to save",
+          ignoreFocusOut: true,
+        });
       }
-      await macroRecorder.save(args);
+
+      if (!name) {
+        return;
+      }
+
+      await macroRecorder.save(name);
     },
     { recordable: false },
   );
@@ -37,10 +47,19 @@ export const registerMacroCommands = (
   dispatcher.register(
     "flowquill.macro.load",
     async (args) => {
-      if (typeof args !== "string") {
-        throw new TypeError("Macro name must be a string");
+      let name = typeof args === "string" && args.length > 0 ? args : undefined;
+      if (!name) {
+        name = await vscode.window.showInputBox({
+          prompt: "Macro name to load",
+          ignoreFocusOut: true,
+        });
       }
-      await macroRecorder.load(args);
+
+      if (!name) {
+        return;
+      }
+
+      await macroRecorder.load(name);
     },
     { recordable: false },
   );

@@ -12,6 +12,9 @@ import {
   nextWordEnd,
   nextWordStart,
   offsetAt,
+  performWordBackwardSelection,
+  performWordEndSelection,
+  performWordForwardSelection,
   positionAt,
   previousWordStart,
   seekFromSelection,
@@ -1172,11 +1175,6 @@ const collectLeapCandidates = (
       continue;
     }
 
-    if (!insideVisibleRange(startOffset, endOffset)) {
-      match = regex.exec(text);
-      continue;
-    }
-
     candidates.push({
       startOffset,
       endOffset,
@@ -1197,6 +1195,7 @@ const collectLeapCandidates = (
 const jumpToCandidate = (editor: vscode.TextEditor, candidate: LeapCandidate): void => {
   const at = positionAt(editor.document, candidate.startOffset);
   editor.selections = [new vscode.Selection(at, at)];
+  editor.revealRange(new vscode.Range(at, at));
 };
 
 const applyObjectPattern = async (
@@ -1627,27 +1626,63 @@ export const registerSelectCommands = (
   });
 
   dispatcher.register("flowquill.select.wordForward", (args) => {
-    extendWith((editor, selection) => wordForwardTarget(editor.document, selection.active, false), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordForwardSelection(editor.document, selection, false, parseCount(args), !selection.isEmpty));
   });
 
   dispatcher.register("flowquill.select.wordEnd", (args) => {
-    extendWith((editor, selection) => nextWordEnd(editor.document, selection.active, false), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordEndSelection(editor.document, selection, false, parseCount(args), !selection.isEmpty));
   });
 
   dispatcher.register("flowquill.select.wordBackward", (args) => {
-    extendWith((editor, selection) => previousWordStart(editor.document, selection.active, false), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordBackwardSelection(editor.document, selection, false, parseCount(args), !selection.isEmpty));
   });
 
   dispatcher.register("flowquill.select.wordForwardBig", (args) => {
-    extendWith((editor, selection) => wordForwardTarget(editor.document, selection.active, true), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordForwardSelection(editor.document, selection, true, parseCount(args), !selection.isEmpty));
   });
 
   dispatcher.register("flowquill.select.wordEndBig", (args) => {
-    extendWith((editor, selection) => nextWordEnd(editor.document, selection.active, true), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordEndSelection(editor.document, selection, true, parseCount(args), !selection.isEmpty));
   });
 
   dispatcher.register("flowquill.select.wordBackwardBig", (args) => {
-    extendWith((editor, selection) => previousWordStart(editor.document, selection.active, true), parseCount(args));
+    const editor = getActiveEditor();
+    if (!editor) {
+      return;
+    }
+    clearPreferredColumns(editor);
+    applySelectionTransform(editor, (selection) =>
+      performWordBackwardSelection(editor.document, selection, true, parseCount(args), !selection.isEmpty));
   });
 
   dispatcher.register("flowquill.select.lineDown", (args) => {
@@ -1660,6 +1695,14 @@ export const registerSelectCommands = (
 
     const count = parseCount(args);
     applySelectionTransform(editor, (selection) => {
+      if (selection.isEmpty) {
+        const line = Math.min(selection.active.line + count - 1, editor.document.lineCount - 1);
+        const anchor = new vscode.Position(selection.active.line, 0);
+        const active = lineBreakPosition(editor.document, line);
+        const next = new vscode.Selection(anchor, active);
+        return selectionWithoutCursorCharacter(editor.document, next);
+      }
+
       const complete = selectionWithCursorCharacter(editor.document, selection);
       const normalized = selection.isReversed
         ? new vscode.Selection(complete.start, complete.end)
@@ -1679,6 +1722,14 @@ export const registerSelectCommands = (
 
     const count = parseCount(args);
     applySelectionTransform(editor, (selection) => {
+      if (selection.isEmpty) {
+        const line = Math.max(selection.active.line - count + 1, 0);
+        const anchor = lineBreakPosition(editor.document, selection.active.line);
+        const active = new vscode.Position(line, 0);
+        const next = new vscode.Selection(anchor, active);
+        return selectionWithoutCursorCharacter(editor.document, next);
+      }
+
       const complete = completeSelectionForLineCommand(editor.document, selection);
       const normalized = selection.isReversed
         ? complete

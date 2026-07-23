@@ -1057,7 +1057,7 @@ suite("Flowquill extension", () => {
     await vscode.commands.executeCommand("flowquill.move.right");
     await vscode.commands.executeCommand("flowquill.repeat.lastChange");
 
-    assert.strictEqual(editor.document.getText(), "HelloHelloput");
+    assert.strictEqual(editor.document.getText(), "HellonHellout");
   });
 
   test("raw line move keeps indentation unchanged", async () => {
@@ -1073,5 +1073,306 @@ suite("Flowquill extension", () => {
     await vscode.commands.executeCommand("flowquill.modify.moveLinesDownRaw");
 
     assert.strictEqual(editor.document.getText(), "b\n  a");
+  });
+
+  test("b includes original cursor spot when starting in middle of word", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      content: "abcd efgh",
+      language: "plaintext",
+    });
+
+    const editor = await vscode.window.showTextDocument(document);
+    // Cursor at index 2 ('c')
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 2), new vscode.Position(0, 2))];
+
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+    await vscode.commands.executeCommand("flowquill.select.wordBackward");
+
+    assert.strictEqual(editor.selection.start.character, 0);
+    assert.strictEqual(editor.selection.end.character, 2);
+  });
+
+  test("consecutive w keypresses select word by word without skipping words", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      content: "list focus condition this",
+      language: "plaintext",
+    });
+
+    const editor = await vscode.window.showTextDocument(document);
+    // Cursor on 'i' in "list" (character 1)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 1), new vscode.Position(0, 1))];
+
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+
+    // First w: selection starts at 1 ('i'), active at 4 (space after "list")
+    assert.strictEqual(editor.selection.start.character, 1);
+    assert.strictEqual(editor.selection.active.character, 4);
+
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+
+    // Second w: selection starts at 5 ('f'), active at 10 (space after "focus")
+    assert.strictEqual(editor.selection.start.character, 5);
+    assert.strictEqual(editor.selection.active.character, 10);
+  });
+
+  test("w step sequence through code expression with symbols and spaces", async () => {
+    const content = "const target =   previousWordStart(document, active, bigWord);";
+    const document = await vscode.workspace.openTextDocument({ content, language: "plaintext" });
+    const editor = await vscode.window.showTextDocument(document);
+
+    // Initial state: cursor on 1st space of '   ' (offset 14)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 14), new vscode.Position(0, 14))];
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+
+    // 1st w: select '   ' (14..16)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 14);
+    assert.strictEqual(editor.selection.active.character, 16);
+
+    // 2nd w: select 'previousWordStart' (17..33)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 17);
+    assert.strictEqual(editor.selection.active.character, 33);
+
+    // 3rd w: select '(' (34..34)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 34);
+    assert.strictEqual(editor.selection.active.character, 34);
+
+    // 4th w: select 'document' (35..42)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 35);
+    assert.strictEqual(editor.selection.active.character, 42);
+
+    // 5th w: select ', ' (43..44)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 43);
+    assert.strictEqual(editor.selection.active.character, 44);
+
+    // 6th w: select 'active' (45..50)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 45);
+    assert.strictEqual(editor.selection.active.character, 50);
+
+    // 7th w: select ', ' (51..52)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 51);
+    assert.strictEqual(editor.selection.active.character, 52);
+
+    // 8th w: select 'bigWord' (53..59)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 53);
+    assert.strictEqual(editor.selection.active.character, 59);
+
+    // 9th w: select ');' (60..61)
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+    assert.strictEqual(editor.selection.start.character, 60);
+    assert.strictEqual(editor.selection.active.character, 61);
+  });
+
+  test("b step sequence backwards through code expression with symbols and spaces", async () => {
+    const content = "const target =   previousWordStart(document, active, bigWord);";
+    const document = await vscode.workspace.openTextDocument({ content, language: "plaintext" });
+    const editor = await vscode.window.showTextDocument(document);
+
+    // Initial state: cursor on ';' (offset 61), selection covering ');' (60..61)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 60), new vscode.Position(0, 61))];
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+
+    // 1st b: select ');' (61..60)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 61);
+    assert.strictEqual(editor.selection.active.character, 60);
+
+    // 2nd b: select 'bigWord' (60..53)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 60);
+    assert.strictEqual(editor.selection.active.character, 53);
+
+    // 3rd b: select ', ' (53..51)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 53);
+    assert.strictEqual(editor.selection.active.character, 51);
+
+    // 4th b: select 'active' (51..45)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 51);
+    assert.strictEqual(editor.selection.active.character, 45);
+
+    // 5th b: select ', ' (45..43)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 45);
+    assert.strictEqual(editor.selection.active.character, 43);
+
+    // 6th b: select 'document' (43..35)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 43);
+    assert.strictEqual(editor.selection.active.character, 35);
+
+    // 7th b: select '(' (35..34)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 35);
+    assert.strictEqual(editor.selection.active.character, 34);
+
+    // 8th b: select 'previousWordStart' (34..17)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 34);
+    assert.strictEqual(editor.selection.active.character, 17);
+
+    // 9th b: select '=   ' (17..13)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 17);
+    assert.strictEqual(editor.selection.active.character, 13);
+
+    // 10th b: select 'target' (13..6)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 13);
+    assert.strictEqual(editor.selection.active.character, 6);
+
+    // 11th b: select 'const' (6..0)
+    await vscode.commands.executeCommand("flowquill.move.wordBackward");
+    assert.strictEqual(editor.selection.anchor.character, 6);
+    assert.strictEqual(editor.selection.active.character, 0);
+  });
+
+  test("e step sequence forward through code expression with symbols and spaces", async () => {
+    const content = "const target =   previousWordStart(document, active, bigWord);";
+    const document = await vscode.workspace.openTextDocument({ content, language: "plaintext" });
+    const editor = await vscode.window.showTextDocument(document);
+
+    // Initial state: cursor on '=' (offset 13)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 13), new vscode.Position(0, 13))];
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+
+    // 1st e: select '   previousWordStart' (14..33)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 14);
+    assert.strictEqual(editor.selection.active.character, 33);
+
+    // 2nd e: select '(' (34..34)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 34);
+    assert.strictEqual(editor.selection.active.character, 34);
+
+    // 3rd e: select 'document' (35..42)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 35);
+    assert.strictEqual(editor.selection.active.character, 42);
+
+    // 4th e: select ',' (43..43)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 43);
+    assert.strictEqual(editor.selection.active.character, 43);
+
+    // 5th e: select ' active' (44..50)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 44);
+    assert.strictEqual(editor.selection.active.character, 50);
+
+    // 6th e: select ',' (51..51)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 51);
+    assert.strictEqual(editor.selection.active.character, 51);
+
+    // 7th e: select ' bigWord' (52..59)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 52);
+    assert.strictEqual(editor.selection.active.character, 59);
+
+    // 8th e: select ');' (60..61)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 60);
+    assert.strictEqual(editor.selection.active.character, 61);
+  });
+
+  test("e step sequence through space plus punctuation (if (failures)", async () => {
+    const content = "if (failures";
+    const document = await vscode.workspace.openTextDocument({ content, language: "plaintext" });
+    const editor = await vscode.window.showTextDocument(document);
+
+    // Initial state: cursor on 'i' (offset 0)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 0))];
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+
+    // 1st e: select 'if' (0..1)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 0);
+    assert.strictEqual(editor.selection.active.character, 1);
+
+    // 2nd e: select ' (' (2..3)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 2);
+    assert.strictEqual(editor.selection.active.character, 3);
+
+    // 3rd e: select 'failures' (4..11)
+    await vscode.commands.executeCommand("flowquill.move.wordEnd");
+    assert.strictEqual(editor.selection.start.character, 4);
+    assert.strictEqual(editor.selection.active.character, 11);
+  });
+
+  test("w on whitespace before a word selects whitespace run when starting new selection", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      content: "   hello",
+      language: "plaintext",
+    });
+
+    const editor = await vscode.window.showTextDocument(document);
+    // Cursor at index 0 (whitespace)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 0))];
+
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+    await vscode.commands.executeCommand("flowquill.move.wordForward");
+
+    const text = selectedTextsWithCursor(editor)[0];
+    assert.strictEqual(text, "   ");
+  });
+
+  test("alt+a and alt+i preserve 1-block-cursor selection", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      content: "hello",
+      language: "plaintext",
+    });
+
+    const editor = await vscode.window.showTextDocument(document);
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 0))];
+
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+    await vscode.commands.executeCommand("flowquill.modify.appendAfterPreserveSelection");
+    assert.strictEqual(editor.selection.start.character, 0);
+    assert.strictEqual(editor.selection.end.character, 1);
+  });
+
+  test("alt+escape keeps selection when entering move mode", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      content: "hello",
+      language: "plaintext",
+    });
+
+    const editor = await vscode.window.showTextDocument(document);
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 3))];
+
+    await vscode.commands.executeCommand("flowquill.enterSelectMode");
+    await vscode.commands.executeCommand("flowquill.enterMoveModeKeepSelection");
+
+    assert.strictEqual(editor.selection.start.character, 0);
+    assert.strictEqual(editor.selection.end.character, 3);
+  });
+
+  test("x on EOL selects current line including EOL", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      content: "abc\ndef",
+      language: "plaintext",
+    });
+
+    const editor = await vscode.window.showTextDocument(document);
+    // Cursor at EOL of line 0 (char 3)
+    editor.selections = [new vscode.Selection(new vscode.Position(0, 3), new vscode.Position(0, 3))];
+
+    await vscode.commands.executeCommand("flowquill.enterMoveMode");
+    await vscode.commands.executeCommand("flowquill.select.lineDown");
+
+    assert.strictEqual(editor.selection.start.line, 0);
+    assert.strictEqual(editor.selection.start.character, 0);
   });
 });

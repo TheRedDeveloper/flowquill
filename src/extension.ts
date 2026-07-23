@@ -31,6 +31,42 @@ const exitInspectOnMouseSelection = (
   });
 };
 
+const handleMouseSelectionInSelectMode = (
+  modeManager: ModeManager,
+): vscode.Disposable => {
+  let previousSelections: readonly vscode.Selection[] = [];
+  let isUpdating = false;
+
+  return vscode.window.onDidChangeTextEditorSelection((event) => {
+    if (isUpdating) {
+      return;
+    }
+
+    if (
+      modeManager.isMode("select") &&
+      event.kind === vscode.TextEditorSelectionChangeKind.Mouse &&
+      previousSelections.length > 0
+    ) {
+      isUpdating = true;
+      try {
+        const nextSelections = event.selections.map((selection, index) => {
+          const prev = previousSelections[index] ?? previousSelections[0];
+          const anchor = prev ? prev.anchor : selection.anchor;
+          return new vscode.Selection(anchor, selection.active);
+        });
+
+        event.textEditor.selections = nextSelections;
+        previousSelections = nextSelections;
+      } finally {
+        isUpdating = false;
+      }
+      return;
+    }
+
+    previousSelections = event.textEditor.selections;
+  });
+};
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const modeManager = new ModeManager();
   modeManagerRef = modeManager;
@@ -76,6 +112,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       cursorController.render(vscode.window.activeTextEditor);
     }),
     exitInspectOnMouseSelection(modeManager),
+    handleMouseSelectionInSelectMode(modeManager),
     zenGuide,
   );
 }
